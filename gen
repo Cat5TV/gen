@@ -49,18 +49,9 @@ def main():
 -reconnect_on_network_error 1 -reconnect_on_http_error 1 \
 -headers 'User-Agent: FMSc/1.0' -f mp3 http://{shoutcast_server}:{port}/{password}/{stream_id}"
 
-    generate_playlist(music_folder, playlist_file)
-
     while True:
-        # Check for new files in the music folder
-        current_files = set(os.listdir(music_folder))
-        existing_files = set([line.strip() for line in open(playlist_file)])
-        new_files = current_files - existing_files
-
-        # If new files are found, regenerate the playlist
-        if new_files:
-            generate_playlist(music_folder, playlist_file)
-
+        generate_playlist(music_folder, playlist_file)
+        
         with open(playlist_file, "r") as f:
             for line in f:
                 line = line.strip()
@@ -71,8 +62,8 @@ def main():
                     command = ffmpeg_command.replace("$input", f'"{file_name}"')
                     subprocess.Popen(command, shell=True).wait()
 
-        # Sleep for a while before checking again (10 seconds in this case)
-        time.sleep(10)
+        # Sleep for a day before generating the playlist again
+        time.sleep(24 * 60 * 60)
 
 if __name__ == "__main__":
     main()
