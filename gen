@@ -1,87 +1,6 @@
 #!/bin/env python
 # Requires: ffmpeg sox librosa mutagen python3
 
-import os
-import random
-import subprocess
-import time
-import configparser
-import logging
-import datetime
-from mutagen.mp3 import MP3
-from mutagen.flac import FLAC
-
-def load_settings():
-    config = configparser.ConfigParser()
-    config.read('config.ini')
-    settings = config['Settings']
-    return {
-        'music_folder': settings['music_folder'],
-        'playlist_file': settings['playlist_file'],
-        'shoutcast_server': settings['shoutcast_server'],
-        'port': settings['port'],
-        'password': settings['password'],
-        'stream_id': settings['stream_id'],
-        'bitrate': settings['bitrate'],
-        'normalize_audio': settings.getboolean('normalize_audio'),
-        'ice_name': settings['ice_name'],
-        'ice_description': settings['ice_description'],
-        'ice_genre': settings['ice_genre'],
-        'stingers_folder': settings['stingers_folder'],
-        'dynamic_crossfade': settings.getboolean('dynamic_crossfade'),
-        'max_crossfade_duration': int(settings['max_crossfade_duration']),
-        'min_crossfade_duration': int(settings['min_crossfade_duration']),
-        'error_log_file': settings['error_log_file'],
-        'playback_log_file': settings['playback_log_file']
-    }
-
-def setup_logging(error_log_file, playback_log_file):
-    logging.basicConfig(filename=error_log_file, level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
-    logging.getLogger('mutagen').setLevel(logging.ERROR)
-    logging.getLogger('requests').setLevel(logging.ERROR)
-
-def generate_playlist(music_folder, playlist_file):
-    music_files = [file for file in os.listdir(music_folder) if file.endswith((".mp3", ".wav", ".flac", ".aac", ".ogg", ".m4a", ".wma", ".aiff", ".alac"))]
-    random.shuffle(music_files)
-    with open(playlist_file, "w") as f:
-        for file in music_files:
-            f.write(f"{music_folder}{file}\n")
-
-def crossfade_tracks(track1, track2, crossfade_duration):
-    temp_file = "crossfade_temp.mp3"
-    command = f"sox {track1} {track2} {temp_file} -C 192 fade t 0 {crossfade_duration} {crossfade_duration} remix -"
-    subprocess.run(command, shell=True)
-    return temp_file
-
-def normalize_audio(track):
-    temp_file = "normalized_temp.wav"
-    command = f"sox {track} {temp_file} loudnorm"
-    subprocess.run(command, shell=True)
-    return temp_file
-
-def log_playback_info(file_name, playback_log_file, is_stinger=False):
-    # Extract ID3 tag information
-    if file_name.endswith(".mp3"):
-        audio = MP3(file_name)
-        artist = audio.get("TPE1", ["Unknown Artist"])[0]
-        title = audio.get("TIT2", [os.path.basename(file_name)])[0]
-    elif file_name.endswith(".flac"):
-        audio = FLAC(file_name)
-        artist = audio.get("artist", ["Unknown Artist"])[0]
-        title = audio.get("title", [os.path.basename(file_name)])[0]
-    else:
-        artist = "Unknown Artist"
-        title = os.path.basename(file_name)
-
-    # Determine file type
-    file_type = "Stinger" if is_stinger else "Music"
-
-    # Log playback information
-    timestamp = datetime.datetime.now().strftime('%b %d %H:%M:%S')
-    log_entry = f"{timestamp} {file_type}: {artist} - {title}"
-    with open(playback_log_file, "a") as f:
-        f.write(log_entry + "\n")
-
 def main():
     settings = load_settings()
     music_folder = settings['music_folder']
@@ -91,7 +10,7 @@ def main():
     password = settings['password']
     stream_id = settings['stream_id']
     bitrate = settings['bitrate']
-    normalize_audio = settings['normalize_audio']
+    normalize_audio_func = normalize_audio  # Assign the function to another name to avoid conflicts with the variable
     ice_name = settings['ice_name']
     ice_description = settings['ice_description']
     ice_genre = settings['ice_genre']
@@ -133,8 +52,8 @@ def main():
 -reconnect_at_eof 1 -reconnect_streamed 1 -reconnect_delay_max 2 \
 -reconnect_on_network_error 1 -reconnect_on_http_error 1 \
 -headers 'User-Agent: FMSc/1.0' -f mp3 http://{shoutcast_server}:{port}/{password}/{stream_id}"
-                    if normalize_audio:
-                        normalized_file = normalize_audio(file_name)
+                    if normalize_audio_func:
+                        normalized_file = normalize_audio_func(file_name)
                         file_name = normalized_file
                     if previous_track and dynamic_crossfade:
                         crossfade_duration = max(min(int(max_crossfade_duration), int(min_crossfade_duration) + int(previous_track_duration) - int(crossfade_position)), int(min_crossfade_duration))
@@ -145,7 +64,7 @@ def main():
                     subprocess.Popen(command, shell=True).wait()
                     if previous_track:
                         os.remove(crossfade_file)
-                    if normalize_audio:
+                    if normalize_audio_func:
                         os.remove(normalized_file)
                     previous_track = file_name
 
