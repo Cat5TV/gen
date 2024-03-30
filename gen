@@ -56,23 +56,19 @@ def crossfade_tracks(track1, track2, crossfade_duration):
 def normalize_audio(track):
     temp_file = "/tmp/normalized_temp.wav"
 
-    # Create the output file
+    # Construct the sox command with the output file explicitly specified
+    command = f"sox {track} -b 16 -r 44100 -c 2 -o {temp_file} loudnorm"
     try:
-        with open(temp_file, 'w'):
-            pass
-    except OSError as e:
-        logging.error(f"Failed to create output file: {e}")
-        return None
-
-    command = f"sox {track} {temp_file} loudnorm"
-    try:
+        # Execute the command
         subprocess.run(command, shell=True, check=True)
+        # Check if the output file exists
         if os.path.exists(temp_file):
             return temp_file
         else:
             logging.error("Normalized file not found.")
             return None
     except subprocess.CalledProcessError as e:
+        # Log the error if the command execution fails
         logging.error(f"Normalization failed: {e}")
         return None
 
