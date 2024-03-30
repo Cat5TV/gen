@@ -101,12 +101,12 @@ def main():
 
                     # Stream the audio file using ffmpeg with ReplayGain
                     print(f"Streaming music: {artist} - {title}")
-                    ffmpeg_command = f"ffmpeg -i {track} -af volume=replaygain=track -f mp3 icecast://{config['icecast_url']}:{config['icecast_port']}/{config['mount_point']} -loglevel error"
+                    ffmpeg_command = f"ffmpeg -i {track} -af volume=replaygain=track -f mp3 http://{config['shoutcast_server']}:{config['port']}/{config['stream_id']} -loglevel error"
                     subprocess.run(ffmpeg_command, shell=True, check=True)
                 elif track_type == 'stinger':
                     # Stream the stinger file using ffmpeg
                     print(f"Streaming stinger: {track}")
-                    ffmpeg_command = f"ffmpeg -i {track} -f mp3 icecast://{config['icecast_url']}:{config['icecast_port']}/{config['mount_point']} -loglevel error"
+                    ffmpeg_command = f"ffmpeg -i {track} -f mp3 icecast://{config['shoutcast_server']}:{config['port']}/{config['stream_id']} -loglevel error"
                     subprocess.run(ffmpeg_command, shell=True, check=True)
 
         except Exception as e:
