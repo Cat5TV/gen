@@ -5,7 +5,7 @@ https://icecast.org/
 
 - sudo apt-get install icecast2 python3 python3-venv python3-pip
 - python3 -m venv ~/gen
-- source ~gen/bin/activate
+- source ~/gen/bin/activate
 - pip install mutagen
 - deactivate
 
