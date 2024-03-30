@@ -1,4 +1,6 @@
 #!/bin/env python
+# Requires: ffmpeg sox
+
 import os
 import random
 import subprocess
@@ -17,6 +19,7 @@ def load_settings():
         'password': settings['password'],
         'stream_id': settings['stream_id'],
         'bitrate': settings['bitrate'],
+        'crossfade_duration': settings['crossfade_duration'],
         'ice_name': settings['ice_name'],
         'ice_description': settings['ice_description'],
         'ice_genre': settings['ice_genre']
@@ -29,6 +32,12 @@ def generate_playlist(music_folder, playlist_file):
         for file in music_files:
             f.write(f"{music_folder}{file}\n")
 
+def crossfade_tracks(track1, track2, crossfade_duration):
+    temp_file = "crossfade_temp.mp3"
+    command = f"sox {track1} {track2} {temp_file} -C 192 fade t 0 {crossfade_duration} {crossfade_duration} remix -"
+    subprocess.run(command, shell=True)
+    return temp_file
+
 def main():
     settings = load_settings()
     music_folder = settings['music_folder']
@@ -38,30 +47,38 @@ def main():
     password = settings['password']
     stream_id = settings['stream_id']
     bitrate = settings['bitrate']
+    crossfade_duration = settings['crossfade_duration']
     ice_name = settings['ice_name']
     ice_description = settings['ice_description']
     ice_genre = settings['ice_genre']
-
-    ffmpeg_command = f"ffmpeg -i $input -f mp3 -acodec libmp3lame -ab {bitrate} -content_type audio/mpeg -re \
--ice_name '{ice_name}' -ice_description '{ice_description}' -ice_genre '{ice_genre}' -ice_public 1 \
--content_type audio/mpeg -content_type 'audio/mpeg' -ice_private 0 \
--ice_bitrate {bitrate} -content_type 'audio/mpeg' -ac 2 -reconnect 1 \
--reconnect_at_eof 1 -reconnect_streamed 1 -reconnect_delay_max 2 \
--reconnect_on_network_error 1 -reconnect_on_http_error 1 \
--headers 'User-Agent: FMSc/1.0' -f mp3 http://{shoutcast_server}:{port}/{password}/{stream_id}"
 
     while True:
         generate_playlist(music_folder, playlist_file)
         
         with open(playlist_file, "r") as f:
+            previous_track = None
             for line in f:
                 line = line.strip()
                 if line:
                     file_name = line
                     file_base = os.path.basename(file_name)
                     artist, song = file_base.split(" - ") if " - " in file_base else ("Unknown Artist", file_base)
-                    command = ffmpeg_command.replace("$input", f'"{file_name}"')
+                    command = f"ffmpeg -i $input -f mp3 -acodec libmp3lame -ab {bitrate} -content_type audio/mpeg -re \
+-ice_name '{ice_name}' -ice_description '{ice_description}' -ice_genre '{ice_genre}' -ice_public 1 \
+-content_type audio/mpeg -content_type 'audio/mpeg' -ice_private 0 \
+-ice_bitrate {bitrate} -content_type 'audio/mpeg' -ac 2 -reconnect 1 \
+-reconnect_at_eof 1 -reconnect_streamed 1 -reconnect_delay_max 2 \
+-reconnect_on_network_error 1 -reconnect_on_http_error 1 \
+-headers 'User-Agent: FMSc/1.0' -f mp3 http://{shoutcast_server}:{port}/{password}/{stream_id}"
+                    if previous_track:
+                        crossfade_file = crossfade_tracks(previous_track, file_name, crossfade_duration)
+                        command = command.replace("$input", f'"{crossfade_file}"')
+                    else:
+                        command = command.replace("$input", f'"{file_name}"')
                     subprocess.Popen(command, shell=True).wait()
+                    if previous_track:
+                        os.remove(crossfade_file)
+                    previous_track = file_name
 
         # Sleep for a day before generating the playlist again
         time.sleep(24 * 60 * 60)
