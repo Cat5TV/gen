@@ -61,9 +61,20 @@ def normalize_audio(track):
     try:
         tags_output = subprocess.check_output(tag_command, shell=True, stderr=subprocess.STDOUT)
         tags = tags_output.decode('utf-8')
+        # Extract artist and title from the tags
+        artist = ""
+        title = ""
+        for line in tags.split('\n'):
+            if line.startswith('artist'):
+                artist = line.split('=')[1].strip()
+            elif line.startswith('title'):
+                title = line.split('=')[1].strip()
     except subprocess.CalledProcessError as e:
         logging.error(f"Failed to extract ID3 tags: {e}")
         return None
+
+    # Construct the log message with artist and title
+    log_message = f"{artist} - {title}"
 
     # Construct the sox command with the norm effect to normalize audio
     normalize_command = f"sox -t mp3 {track} -b 16 -r 44100 -c 2 {temp_file} norm"
@@ -82,7 +93,7 @@ def normalize_audio(track):
         logging.error(f"Failed to apply ID3 tags: {e}")
         return None
 
-    return temp_file
+    return temp_file, log_message
 
 def log_playback_info(file_name, playback_log_file, is_stinger=False):
     # Extract ID3 tag information
