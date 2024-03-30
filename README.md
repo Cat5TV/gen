@@ -5,7 +5,7 @@ https://icecast.org/
 
 apt-get install icecast2
 
-Gen supports the following file formats for both music and stingers:
+Gen supports the following source file formats for both music and stingers:
 
 - .mp3: MPEG Layer III audio format, widely used for music and other audio recordings.
 - .wav: Waveform Audio File Format, an uncompressed audio file format commonly used for storing raw audio data.
