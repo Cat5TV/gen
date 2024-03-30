@@ -136,13 +136,15 @@ def main():
                     artist, song = file_base.split(" - ") if " - " in file_base else ("Unknown Artist", file_base)
                     command = f"ffmpeg -i $input -f mp3 -acodec libmp3lame -ab {bitrate} -content_type audio/mpeg -re \
 -ice_name '{ice_name}' -ice_description '{ice_description}' -ice_genre '{ice_genre}' -ice_public 1 \
--content_type audio/mpeg -content_type 'audio/mpeg' -ice_private 0 \
+-ice_private 0 \
 -ice_bitrate {bitrate} -content_type 'audio/mpeg' -ac 2 -reconnect 1 \
 -reconnect_at_eof 1 -reconnect_streamed 1 -reconnect_delay_max 2 \
 -reconnect_on_network_error 1 -reconnect_on_http_error 1 \
 -headers 'User-Agent: FMSc/1.0' -f mp3 http://{shoutcast_server}:{port}/{password}/{stream_id}"
                     if normalize_audio_func:
                         normalized_file = normalize_audio_func(file_name)
+                        if normalized_file is None:
+                            continue  # Skip to the next file if normalization fails
                         file_name = normalized_file
                     if previous_track and dynamic_crossfade:
                         crossfade_duration = max(min(int(max_crossfade_duration), int(min_crossfade_duration) + int(previous_track_duration) - int(crossfade_position)), int(min_crossfade_duration))
