@@ -27,24 +27,6 @@ def extract_id3_tags(track):
         logging.error(f"Failed to extract ID3 tags: {e}")
         return None, None
 
-def normalize_audio(track, artist, title):
-    temp_file = "/tmp/normalized_temp.wav"
-    log_message = f"{artist} - {title}"
-    logging.debug(f"Log message: {log_message}")
-
-    # Construct the sox command with the norm effect to normalize audio
-    normalize_command = f"sox -t mp3 {track} -b 16 -r 44100 -c 2 {temp_file} norm"
-    try:
-        # Execute the normalization command
-        subprocess.run(normalize_command, shell=True, check=True)
-        # Apply ID3 tags to the normalized WAV file
-        apply_tags_command = f'sox {temp_file} -t wav - {temp_file} artist="{artist}" title="{title}"'
-        subprocess.run(apply_tags_command, shell=True, check=True)
-        return temp_file, log_message
-    except subprocess.CalledProcessError as e:
-        logging.error(f"Normalization failed: {e}")
-        return None, None
-
 def load_config():
     config = configparser.ConfigParser()
     config.read('config.ini')
@@ -107,16 +89,11 @@ def main():
                         logging.error(f"Failed to extract ID3 tags for {track}.")
                         continue
 
-                    # Normalize audio
-                    normalized_file, log_message = normalize_audio(track, artist, title)
-                    if normalized_file is None:
-                        logging.error(f"Normalization failed for {track}.")
-                        continue
+                    log_message = f"{artist} - {title}"
+                    logging.debug(f"Log message: {log_message}")
 
-                    logging.info(f"Normalized {log_message}")
-
-                    # Stream the normalized file using ffmpeg
-                    ffmpeg_command = f"ffmpeg -i {normalized_file} -f mp3 icecast://{config['icecast_url']}:{config['icecast_port']}/{config['mount_point']} -loglevel error"
+                    # Stream the music file using ffmpeg
+                    ffmpeg_command = f"ffmpeg -i {track} -f mp3 icecast://{config['icecast_url']}:{config['icecast_port']}/{config['mount_point']} -loglevel error"
                     subprocess.run(ffmpeg_command, shell=True, check=True)
                 elif track_type == 'stinger':
                     # Stream the stinger file using ffmpeg
