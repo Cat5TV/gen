@@ -24,6 +24,7 @@ def extract_id3_tags(track):
         return 'Unknown Artist', 'Unknown Title'
 
 def load_config():
+    print("Loading configuration...")
     config = configparser.ConfigParser()
     config.read('config.ini')
     return config['DEFAULT']
@@ -61,10 +62,11 @@ def generate_playlist(config):
             # Randomize next stinger interval
             stinger_interval = random.randint(3, stinger_max_interval)
 
+    print("Playlist generated.")
     return playlist
 
 def main():
-    print("Loading configuration...")
+    print("Starting script...")
     # Load configuration
     config = load_config()
 
@@ -75,9 +77,9 @@ def main():
 
     while True:
         try:
-            print("Generating playlist...")
             # Generate playlist
             playlist = generate_playlist(config)
+            print(f"Playlist: {playlist}")
 
             # Iterate over playlist
             for track, track_type in playlist:
@@ -107,5 +109,4 @@ def main():
         time.sleep(86400)
 
 if __name__ == "__main__":
-    print("Starting script...")
     main()
