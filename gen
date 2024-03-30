@@ -32,11 +32,13 @@ def load_config():
 def generate_playlist(config):
     print("Generating playlist...")
     music_folder = config.get('music_folder', './music/')
+    print(f"Music folder: {music_folder}")
+
     music_files = [os.path.join(music_folder, file) for file in os.listdir(music_folder) if file.endswith((".mp3", ".wav", ".flac", ".aac"))]
+    print(f"Music files: {music_files}")
+
     stingers_folder = config.get('stingers_folder', './stingers/')
     stinger_files = [os.path.join(stingers_folder, file) for file in os.listdir(stingers_folder) if file.endswith((".mp3", ".wav", ".flac", ".aac"))]
-
-    print(f"Music files: {music_files}")
     print(f"Stinger files: {stinger_files}")
 
     # Shuffle the music files
@@ -67,7 +69,6 @@ def generate_playlist(config):
 
     print("Playlist generated.")
     return playlist
-
 
 def main():
     print("Starting script...")
