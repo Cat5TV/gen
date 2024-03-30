@@ -20,6 +20,7 @@ def load_settings():
         'stream_id': settings['stream_id'],
         'bitrate': settings['bitrate'],
         'crossfade_duration': settings['crossfade_duration'],
+        'normalize_audio': settings.getboolean('normalize_audio'),
         'ice_name': settings['ice_name'],
         'ice_description': settings['ice_description'],
         'ice_genre': settings['ice_genre']
@@ -38,6 +39,12 @@ def crossfade_tracks(track1, track2, crossfade_duration):
     subprocess.run(command, shell=True)
     return temp_file
 
+def normalize_audio(track):
+    temp_file = "normalized_temp.wav"
+    command = f"sox {track} {temp_file} loudnorm"
+    subprocess.run(command, shell=True)
+    return temp_file
+
 def main():
     settings = load_settings()
     music_folder = settings['music_folder']
@@ -48,6 +55,7 @@ def main():
     stream_id = settings['stream_id']
     bitrate = settings['bitrate']
     crossfade_duration = settings['crossfade_duration']
+    normalize_audio = settings['normalize_audio']
     ice_name = settings['ice_name']
     ice_description = settings['ice_description']
     ice_genre = settings['ice_genre']
@@ -70,6 +78,9 @@ def main():
 -reconnect_at_eof 1 -reconnect_streamed 1 -reconnect_delay_max 2 \
 -reconnect_on_network_error 1 -reconnect_on_http_error 1 \
 -headers 'User-Agent: FMSc/1.0' -f mp3 http://{shoutcast_server}:{port}/{password}/{stream_id}"
+                    if normalize_audio:
+                        normalized_file = normalize_audio(file_name)
+                        file_name = normalized_file
                     if previous_track:
                         crossfade_file = crossfade_tracks(previous_track, file_name, crossfade_duration)
                         command = command.replace("$input", f'"{crossfade_file}"')
@@ -78,6 +89,8 @@ def main():
                     subprocess.Popen(command, shell=True).wait()
                     if previous_track:
                         os.remove(crossfade_file)
+                    if normalize_audio:
+                        os.remove(normalized_file)
                     previous_track = file_name
 
         # Sleep for a day before generating the playlist again
