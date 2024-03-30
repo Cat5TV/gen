@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# Load config
+source config.ini
+
+# Construct ffmpeg command
+ffmpeg_cmd="ffmpeg -f alsa -i $input -f mp3 -acodec libmp3lame -ab 128k -content_type audio/mpeg -re \
+-ice_name 'Stream Name' -ice_description 'Stream Description' -ice_genre 'Genre' -ice_public 1 -content_type audio/mpeg \
+-content_type 'audio/mpeg' -ice_private 0 -ice_bitrate 128 -content_type 'audio/mpeg' -ac 2 -reconnect 1 -reconnect_at_eof 1 \
+-reconnect_streamed 1 -reconnect_delay_max 2 -reconnect_on_network_error 1 -reconnect_on_http_error 1 \
+-headers 'User-Agent: FMSc/1.0' -f mp3 \"http://$shoutcast_server:$port/$password/$stream_id\""
+
+# Run ffmpeg command
+eval $ffmpeg_cmd
