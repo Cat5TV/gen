@@ -54,7 +54,7 @@ def crossfade_tracks(track1, track2, crossfade_duration):
     return temp_file
 
 def normalize_audio(track):
-    temp_file = "normalized_temp.wav"
+    temp_file = "/tmp/normalized_temp.wav"  # Specify full path for temporary file
     command = f"sox {track} {temp_file} loudnorm"
     subprocess.run(command, shell=True)
     return temp_file
