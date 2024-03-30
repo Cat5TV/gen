@@ -1,1 +1,4 @@
 .venv/
+logs/*
+audio/music/*
+audio/stingers/*
