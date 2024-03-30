@@ -24,8 +24,19 @@ def extract_id3_tags(track):
                 title = line.split('=')[1].strip()
         return artist, title
     except subprocess.CalledProcessError as e:
-        logging.error(f"Failed to extract ID3 tags: {e}")
+        logging.error(f"Failed to extract ID3 tags: {e.output.decode('utf-8')}")
         return None, None
+
+def apply_replaygain(track):
+    try:
+        # Apply ReplayGain to audio using sox
+        replaygain_file = "/tmp/replaygain_temp.wav"
+        replaygain_command = f'sox "{track}" "{replaygain_file}" gain'
+        subprocess.run(replaygain_command, shell=True, check=True)
+        return replaygain_file
+    except subprocess.CalledProcessError as e:
+        logging.error(f"ReplayGain failed: {e}")
+        return None
 
 def load_config():
     config = configparser.ConfigParser()
@@ -92,8 +103,14 @@ def main():
                     log_message = f"{artist} - {title}"
                     logging.debug(f"Log message: {log_message}")
 
-                    # Stream the music file using ffmpeg
-                    ffmpeg_command = f"ffmpeg -i {track} -f mp3 icecast://{config['icecast_url']}:{config['icecast_port']}/{config['mount_point']} -loglevel error"
+                    # Apply ReplayGain
+                    replaygain_file = apply_replaygain(track)
+                    if replaygain_file is None:
+                        logging.error(f"Failed to apply ReplayGain to {track}.")
+                        continue
+
+                    # Stream the audio file using ffmpeg with ReplayGain
+                    ffmpeg_command = f"ffmpeg -i {replaygain_file} -f mp3 icecast://{config['icecast_url']}:{config['icecast_port']}/{config['mount_point']} -loglevel error"
                     subprocess.run(ffmpeg_command, shell=True, check=True)
                 elif track_type == 'stinger':
                     # Stream the stinger file using ffmpeg
