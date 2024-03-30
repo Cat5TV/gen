@@ -40,7 +40,7 @@ def load_settings():
     }
 
 def generate_playlist(music_folder, playlist_file):
-    music_files = [file for file in os.listdir(music_folder) if file.endswith((".mp3", ".wav", ".flac", ".aac"))]
+    music_files = [file for file in os.listdir(music_folder) if file.endswith((".mp3", ".wav", ".flac", ".aac", ".ogg", ".m4a", ".wma", ".aiff", ".alac"))]
     random.shuffle(music_files)
     with open(playlist_file, "w") as f:
         for file in music_files:
