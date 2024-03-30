@@ -27,8 +27,8 @@ def load_config():
     config.read('config.ini')
     return config['DEFAULT']
 
-def generate_playlist():
-    music_folder = "./music/"
+def generate_playlist(config):
+    music_folder = config.get('music_folder', './music/')
     music_files = [file for file in os.listdir(music_folder) if file.endswith((".mp3", ".wav", ".flac", ".aac"))]
     stingers_folder = config.get('stingers_folder', './stingers/')
     stinger_files = [file for file in os.listdir(stingers_folder) if file.endswith((".mp3", ".wav", ".flac", ".aac"))]
@@ -73,7 +73,7 @@ def main():
     while True:
         try:
             # Generate playlist
-            playlist = generate_playlist()
+            playlist = generate_playlist(config)
 
             # Iterate over playlist
             for track, track_type in playlist:
