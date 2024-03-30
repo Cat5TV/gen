@@ -1,5 +1,5 @@
 #!/bin/env python
-# Requires: ffmpeg sox librosa mutagen python
+# Requires: ffmpeg sox librosa mutagen python3
 
 import os
 import random
