@@ -3,8 +3,12 @@ Generator
 
 https://icecast.org/
 
-sudo apt-get install icecast2 python3 python3-venv python3-pip
-python3 -m venv ~/gen
+- sudo apt-get install icecast2 python3 python3-venv python3-pip
+- python3 -m venv ~/gen
+- source myenv/bin/activate
+- pip install mutagen
+- deactivate
+
 
 Gen supports the following source file formats for both music and stingers:
 
