@@ -78,6 +78,7 @@ def main():
     while True:
         try:
             # Generate playlist
+            print("Generating playlist...")
             playlist = generate_playlist(config)
             print(f"Playlist: {playlist}")
 
