@@ -1,5 +1,5 @@
 #!/bin/env python
-# Requires: ffmpeg sox librosa
+# Requires: ffmpeg sox librosa mutagen python
 
 import os
 import random
@@ -7,6 +7,9 @@ import subprocess
 import time
 import configparser
 import logging
+import datetime
+from mutagen.mp3 import MP3
+from mutagen.flac import FLAC
 
 def load_settings():
     config = configparser.ConfigParser()
@@ -28,11 +31,14 @@ def load_settings():
         'dynamic_crossfade': settings.getboolean('dynamic_crossfade'),
         'max_crossfade_duration': int(settings['max_crossfade_duration']),
         'min_crossfade_duration': int(settings['min_crossfade_duration']),
-        'log_file': settings['log_file']
+        'error_log_file': settings['error_log_file'],
+        'playback_log_file': settings['playback_log_file']
     }
 
-def setup_logging(log_file):
-    logging.basicConfig(filename=log_file, level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
+def setup_logging(error_log_file, playback_log_file):
+    logging.basicConfig(filename=error_log_file, level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
+    logging.getLogger('mutagen').setLevel(logging.ERROR)
+    logging.getLogger('requests').setLevel(logging.ERROR)
 
 def generate_playlist(music_folder, playlist_file):
     music_files = [file for file in os.listdir(music_folder) if file.endswith((".mp3", ".wav", ".flac", ".aac", ".ogg", ".m4a", ".wma", ".aiff", ".alac"))]
@@ -53,6 +59,29 @@ def normalize_audio(track):
     subprocess.run(command, shell=True)
     return temp_file
 
+def log_playback_info(file_name, playback_log_file, is_stinger=False):
+    # Extract ID3 tag information
+    if file_name.endswith(".mp3"):
+        audio = MP3(file_name)
+        artist = audio.get("TPE1", ["Unknown Artist"])[0]
+        title = audio.get("TIT2", [os.path.basename(file_name)])[0]
+    elif file_name.endswith(".flac"):
+        audio = FLAC(file_name)
+        artist = audio.get("artist", ["Unknown Artist"])[0]
+        title = audio.get("title", [os.path.basename(file_name)])[0]
+    else:
+        artist = "Unknown Artist"
+        title = os.path.basename(file_name)
+
+    # Determine file type
+    file_type = "Stinger" if is_stinger else "Music"
+
+    # Log playback information
+    timestamp = datetime.datetime.now().strftime('%b %d %H:%M:%S')
+    log_entry = f"{timestamp} {file_type}: {artist} - {title}"
+    with open(playback_log_file, "a") as f:
+        f.write(log_entry + "\n")
+
 def main():
     settings = load_settings()
     music_folder = settings['music_folder']
@@ -70,10 +99,11 @@ def main():
     dynamic_crossfade = settings['dynamic_crossfade']
     max_crossfade_duration = settings['max_crossfade_duration']
     min_crossfade_duration = settings['min_crossfade_duration']
-    log_file = settings['log_file']
+    error_log_file = settings['error_log_file']
+    playback_log_file = settings['playback_log_file']
 
     # Setup logging
-    setup_logging(log_file)
+    setup_logging(error_log_file, playback_log_file)
 
     while True:
         # Check for missing or deleted music or stinger files
@@ -118,6 +148,10 @@ def main():
                     if normalize_audio:
                         os.remove(normalized_file)
                     previous_track = file_name
+
+                    # Log playback information
+                    is_stinger = file_name.startswith(stingers_folder)
+                    log_playback_info(file_name, playback_log_file, is_stinger)
 
         # Sleep for a day before generating the playlist again
         time.sleep(24 * 60 * 60)
