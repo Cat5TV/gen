@@ -56,21 +56,33 @@ def crossfade_tracks(track1, track2, crossfade_duration):
 def normalize_audio(track):
     temp_file = "/tmp/normalized_temp.wav"
 
-    # Construct the sox command with the norm effect to normalize audio
-    command = f"sox -t mp3 {track} -b 16 -r 44100 -c 2 {temp_file} norm"
+    # Extract ID3 tags from input MP3 file
+    tag_command = f'sox --show-tags "{track}"'
     try:
-        # Execute the command
-        subprocess.run(command, shell=True, check=True)
-        # Check if the output file exists
-        if os.path.exists(temp_file):
-            return temp_file
-        else:
-            logging.error("Normalized file not found.")
-            return None
+        tags_output = subprocess.check_output(tag_command, shell=True, stderr=subprocess.STDOUT)
+        tags = tags_output.decode('utf-8')
     except subprocess.CalledProcessError as e:
-        # Log the error if the command execution fails
+        logging.error(f"Failed to extract ID3 tags: {e}")
+        return None
+
+    # Construct the sox command with the norm effect to normalize audio
+    normalize_command = f"sox -t mp3 {track} -b 16 -r 44100 -c 2 {temp_file} norm"
+    try:
+        # Execute the normalization command
+        subprocess.run(normalize_command, shell=True, check=True)
+    except subprocess.CalledProcessError as e:
         logging.error(f"Normalization failed: {e}")
         return None
+
+    # Apply ID3 tags to the normalized WAV file
+    apply_tags_command = f'sox {temp_file} -t wav - {temp_file} {tags}'
+    try:
+        subprocess.run(apply_tags_command, shell=True, check=True)
+    except subprocess.CalledProcessError as e:
+        logging.error(f"Failed to apply ID3 tags: {e}")
+        return None
+
+    return temp_file
 
 def log_playback_info(file_name, playback_log_file, is_stinger=False):
     # Extract ID3 tag information
