@@ -3,7 +3,7 @@ Generator
 
 https://icecast.org/
 
-apt-get install icecast2
+apt-get install icecast2 python3 python3-venv python3-pip
 
 Gen supports the following source file formats for both music and stingers:
 
