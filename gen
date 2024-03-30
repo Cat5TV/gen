@@ -1,0 +1,70 @@
+import os
+import random
+import subprocess
+import time
+import configparser
+
+def load_settings():
+    config = configparser.ConfigParser()
+    config.read('config.ini')
+    settings = config['Settings']
+    return {
+        'music_folder': settings['music_folder'],
+        'playlist_file': settings['playlist_file'],
+        'shoutcast_server': settings['shoutcast_server'],
+        'port': settings['port'],
+        'password': settings['password'],
+        'stream_id': settings['stream_id'],
+        'bitrate': settings['bitrate'],
+        'ice_name': settings['ice_name'],
+        'ice_description': settings['ice_description'],
+        'ice_genre': settings['ice_genre']
+    }
+
+def generate_playlist(music_folder, playlist_file):
+    music_files = [file for file in os.listdir(music_folder) if file.endswith((".mp3", ".wav", ".flac", ".aac"))]
+    random.shuffle(music_files)
+    with open(playlist_file, "w") as f:
+        for file in music_files:
+            f.write(f"{music_folder}{file}\n")
+
+def main():
+    settings = load_settings()
+    music_folder = settings['music_folder']
+    playlist_file = settings['playlist_file']
+    shoutcast_server = settings['shoutcast_server']
+    port = settings['port']
+    password = settings['password']
+    stream_id = settings['stream_id']
+    bitrate = settings['bitrate']
+    ice_name = settings['ice_name']
+    ice_description = settings['ice_description']
+    ice_genre = settings['ice_genre']
+
+    ffmpeg_command = f"ffmpeg -i $input -f mp3 -acodec libmp3lame -ab {bitrate} -content_type audio/mpeg -re \
+-ice_name '{ice_name}' -ice_description '{ice_description}' -ice_genre '{ice_genre}' -ice_public 1 \
+-content_type audio/mpeg -content_type 'audio/mpeg' -ice_private 0 \
+-ice_bitrate {bitrate} -content_type 'audio/mpeg' -ac 2 -reconnect 1 \
+-reconnect_at_eof 1 -reconnect_streamed 1 -reconnect_delay_max 2 \
+-reconnect_on_network_error 1 -reconnect_on_http_error 1 \
+-headers 'User-Agent: FMSc/1.0' -f mp3 http://{shoutcast_server}:{port}/{password}/{stream_id}"
+
+    generate_playlist(music_folder, playlist_file)
+
+    while True:
+        with open(playlist_file, "r") as f:
+            for line in f:
+                line = line.strip()
+                if line:
+                    file_name = line
+                    file_base = os.path.basename(file_name)
+                    artist, song = file_base.split(" - ") if " - " in file_base else ("Unknown Artist", file_base)
+                    command = ffmpeg_command.replace("$input", f'"{file_name}"')
+                    subprocess.Popen(command, shell=True).wait()
+        
+        # Re-generate playlist once per day
+        time.sleep(24 * 60 * 60)
+        generate_playlist(music_folder, playlist_file)
+
+if __name__ == "__main__":
+    main()
