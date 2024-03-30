@@ -77,6 +77,7 @@ def main():
 
             # Iterate over playlist
             for track, track_type in playlist:
+                print(f"Streaming: {track}")
                 if track_type == 'music':
                     # Extract ID3 tags
                     artist, title = extract_id3_tags(track)
