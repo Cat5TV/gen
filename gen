@@ -77,8 +77,8 @@ def main():
     config = load_config()
 
     # Configure logging
-    log_file = config.get('error_log_file', 'error.log')
-    logging.basicConfig(filename=log_file, level=logging.DEBUG,
+    error_log_file = config.get('error_log_file', './logs/gen_error.log')
+    logging.basicConfig(filename=error_log_file, level=logging.DEBUG,
                         format='%(asctime)s - %(levelname)s - %(message)s')
 
     while True:
