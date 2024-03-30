@@ -6,16 +6,7 @@ import random
 import subprocess
 import time
 import configparser
-import librosa
-
-# Function to determine if the audio is fading out based on spectral centroid
-def is_fading_out(audio_file):
-    y, sr = librosa.load(audio_file)
-    spectral_centroids = librosa.feature.spectral_centroid(y=y, sr=sr)[0]
-    # Calculate the mean spectral centroid over the last portion of the audio
-    mean_spectral_centroid = spectral_centroids[-int(len(spectral_centroids) * 0.2):].mean()
-    # You may need to adjust the threshold based on your specific requirements
-    return mean_spectral_centroid < threshold
+import logging
 
 def load_settings():
     config = configparser.ConfigParser()
@@ -36,8 +27,12 @@ def load_settings():
         'stingers_folder': settings['stingers_folder'],
         'dynamic_crossfade': settings.getboolean('dynamic_crossfade'),
         'max_crossfade_duration': int(settings['max_crossfade_duration']),
-        'min_crossfade_duration': int(settings['min_crossfade_duration'])
+        'min_crossfade_duration': int(settings['min_crossfade_duration']),
+        'log_file': settings['log_file']
     }
+
+def setup_logging(log_file):
+    logging.basicConfig(filename=log_file, level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def generate_playlist(music_folder, playlist_file):
     music_files = [file for file in os.listdir(music_folder) if file.endswith((".mp3", ".wav", ".flac", ".aac", ".ogg", ".m4a", ".wma", ".aiff", ".alac"))]
@@ -75,8 +70,18 @@ def main():
     dynamic_crossfade = settings['dynamic_crossfade']
     max_crossfade_duration = settings['max_crossfade_duration']
     min_crossfade_duration = settings['min_crossfade_duration']
+    log_file = settings['log_file']
+
+    # Setup logging
+    setup_logging(log_file)
 
     while True:
+        # Check for missing or deleted music or stinger files
+        if not os.path.exists(music_folder) or not os.path.exists(stingers_folder):
+            logging.error("Music or stinger folder does not exist.")
+            generate_playlist(music_folder, playlist_file)
+        
+        # Generate playlist
         generate_playlist(music_folder, playlist_file)
         
         with open(playlist_file, "r") as f:
@@ -85,6 +90,10 @@ def main():
                 line = line.strip()
                 if line:
                     file_name = line
+                    if not os.path.exists(file_name):
+                        logging.error(f"File does not exist: {file_name}")
+                        continue
+
                     file_base = os.path.basename(file_name)
                     artist, song = file_base.split(" - ") if " - " in file_base else ("Unknown Artist", file_base)
                     command = f"ffmpeg -i $input -f mp3 -acodec libmp3lame -ab {bitrate} -content_type audio/mpeg -re \
@@ -98,15 +107,9 @@ def main():
                         normalized_file = normalize_audio(file_name)
                         file_name = normalized_file
                     if previous_track and dynamic_crossfade:
-                        if is_fading_out(previous_track):
-                            # Adjust crossfade duration based on audio content
-                            # For example, you can use a longer crossfade if the song is fading out
-                            crossfade_duration = max(min(int(max_crossfade_duration), int(min_crossfade_duration) + int(previous_track_duration) - int(crossfade_position)), int(min_crossfade_duration))
-                            crossfade_file = crossfade_tracks(previous_track, file_name, crossfade_duration)
-                            command = command.replace("$input", f'"{crossfade_file}"')
-                        else:
-                            # Wait for the current song to finish fading out before starting the next song
-                            time.sleep(5)  # Adjust sleep duration as needed
+                        crossfade_duration = max(min(int(max_crossfade_duration), int(min_crossfade_duration) + int(previous_track_duration) - int(crossfade_position)), int(min_crossfade_duration))
+                        crossfade_file = crossfade_tracks(previous_track, file_name, crossfade_duration)
+                        command = command.replace("$input", f'"{crossfade_file}"')
                     else:
                         command = command.replace("$input", f'"{file_name}"')
                     subprocess.Popen(command, shell=True).wait()
