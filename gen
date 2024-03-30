@@ -23,7 +23,8 @@ def load_settings():
         'normalize_audio': settings.getboolean('normalize_audio'),
         'ice_name': settings['ice_name'],
         'ice_description': settings['ice_description'],
-        'ice_genre': settings['ice_genre']
+        'ice_genre': settings['ice_genre'],
+        'stingers_folder': settings['stingers_folder']
     }
 
 def generate_playlist(music_folder, playlist_file):
@@ -59,12 +60,14 @@ def main():
     ice_name = settings['ice_name']
     ice_description = settings['ice_description']
     ice_genre = settings['ice_genre']
+    stingers_folder = settings['stingers_folder']
 
     while True:
         generate_playlist(music_folder, playlist_file)
         
         with open(playlist_file, "r") as f:
             previous_track = None
+            songs_since_last_stinger = 0
             for line in f:
                 line = line.strip()
                 if line:
@@ -92,6 +95,22 @@ def main():
                     if normalize_audio:
                         os.remove(normalized_file)
                     previous_track = file_name
+
+                    # Play stingers (promotional clips)
+                    if songs_since_last_stinger >= 3 and random.random() < 0.3:
+                        stinger_files = [file for file in os.listdir(stingers_folder) if file.endswith((".mp3", ".wav", ".flac", ".aac"))]
+                        stinger_file = random.choice(stinger_files)
+                        stinger_path = os.path.join(stingers_folder, stinger_file)
+                        subprocess.Popen(f"ffmpeg -i {stinger_path} -f mp3 -acodec libmp3lame -ab {bitrate} -content_type audio/mpeg -re \
+-ice_name '{ice_name}' -ice_description '{ice_description}' -ice_genre '{ice_genre}' -ice_public 1 \
+-content_type audio/mpeg -content_type 'audio/mpeg' -ice_private 0 \
+-ice_bitrate {bitrate} -content_type 'audio/mpeg' -ac 2 -reconnect 1 \
+-reconnect_at_eof 1 -reconnect_streamed 1 -reconnect_delay_max 2 \
+-reconnect_on_network_error 1 -reconnect_on_http_error 1 \
+-headers 'User-Agent: FMSc/1.0' -f mp3 http://{shoutcast_server}:{port}/{password}/{stream_id}", shell=True).wait()
+                        songs_since_last_stinger = 0
+                    else:
+                        songs_since_last_stinger += 1
 
         # Sleep for a day before generating the playlist again
         time.sleep(24 * 60 * 60)
