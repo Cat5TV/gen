@@ -58,9 +58,13 @@ def normalize_audio(track):
     command = f"sox {track} {temp_file} loudnorm"
     try:
         subprocess.run(command, shell=True, check=True)
-        return temp_file
-    except subprocess.CalledProcessError:
-        logging.error("Normalization failed.")
+        if os.path.exists(temp_file):
+            return temp_file
+        else:
+            logging.error("Normalized file not found.")
+            return None
+    except subprocess.CalledProcessError as e:
+        logging.error(f"Normalization failed: {e}")
         return None
 
 def log_playback_info(file_name, playback_log_file, is_stinger=False):
