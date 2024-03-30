@@ -3,7 +3,7 @@ Generator
 
 https://icecast.org/
 
-- sudo apt-get install icecast2 python3 python3-venv python3-pip
+- sudo apt-get install icecast2 python3 python3-venv python3-pip sox
 - cd ~
 - git clone https://github.com/Cat5TV/gen
 - python3 -m venv ~/gen/.venv
