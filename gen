@@ -28,7 +28,7 @@ def load_config():
     config = configparser.ConfigParser()
     config.read('config.ini')
     print("Config loaded:", config)
-    return config['DEFAULT']
+    return config['settings']
 
 def generate_playlist(config):
     print("Generating playlist...")
