@@ -4,8 +4,10 @@ Generator
 https://icecast.org/
 
 - sudo apt-get install icecast2 python3 python3-venv python3-pip
-- python3 -m venv ~/gen
-- source ~/gen/bin/activate
+- cd ~
+- git clone https://github.com/Cat5TV/gen
+- python3 -m venv ~/gen/.venv
+- source ~/gen/.venv/bin/activate
 - pip install mutagen
 - deactivate
 
