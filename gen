@@ -54,10 +54,14 @@ def crossfade_tracks(track1, track2, crossfade_duration):
     return temp_file
 
 def normalize_audio(track):
-    temp_file = "/tmp/normalized_temp.wav"  # Specify full path for temporary file
+    temp_file = "/tmp/normalized_temp.wav"
     command = f"sox {track} {temp_file} loudnorm"
-    subprocess.run(command, shell=True)
-    return temp_file
+    try:
+        subprocess.run(command, shell=True, check=True)
+        return temp_file
+    except subprocess.CalledProcessError:
+        logging.error("Normalization failed.")
+        return None
 
 def log_playback_info(file_name, playback_log_file, is_stinger=False):
     # Extract ID3 tag information
