@@ -36,6 +36,9 @@ def generate_playlist(config):
     stingers_folder = config.get('stingers_folder', './stingers/')
     stinger_files = [file for file in os.listdir(stingers_folder) if file.endswith((".mp3", ".wav", ".flac", ".aac"))]
 
+    print(f"Music files: {music_files}")
+    print(f"Stinger files: {stinger_files}")
+
     # Shuffle the music files
     random.shuffle(music_files)
 
