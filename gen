@@ -32,9 +32,9 @@ def load_config():
 def generate_playlist(config):
     print("Generating playlist...")
     music_folder = config.get('music_folder', './music/')
-    music_files = [file for file in os.listdir(music_folder) if file.endswith((".mp3", ".wav", ".flac", ".aac"))]
+    music_files = [os.path.join(music_folder, file) for file in os.listdir(music_folder) if file.endswith((".mp3", ".wav", ".flac", ".aac"))]
     stingers_folder = config.get('stingers_folder', './stingers/')
-    stinger_files = [file for file in os.listdir(stingers_folder) if file.endswith((".mp3", ".wav", ".flac", ".aac"))]
+    stinger_files = [os.path.join(stingers_folder, file) for file in os.listdir(stingers_folder) if file.endswith((".mp3", ".wav", ".flac", ".aac"))]
 
     print(f"Music files: {music_files}")
     print(f"Stinger files: {stinger_files}")
@@ -50,14 +50,14 @@ def generate_playlist(config):
 
     # Add music files to playlist
     for file in music_files:
-        playlist.append((os.path.join(music_folder, file), 'music'))
+        playlist.append((file, 'music'))
 
     # Add stinger files to playlist
     stinger_interval = config.getint('stinger_interval', 3)
     stinger_max_interval = config.getint('stinger_max_interval', 8)
     stinger_count = 0
     for file in stinger_files:
-        playlist.append((os.path.join(stingers_folder, file), 'stinger'))
+        playlist.append((file, 'stinger'))
         stinger_count += 1
         if stinger_count >= stinger_interval:
             # Reset stinger count after random interval
@@ -67,6 +67,7 @@ def generate_playlist(config):
 
     print("Playlist generated.")
     return playlist
+
 
 def main():
     print("Starting script...")
