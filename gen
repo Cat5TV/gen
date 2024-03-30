@@ -106,7 +106,7 @@ def main():
                 elif track_type == 'stinger':
                     # Stream the stinger file using ffmpeg
                     print(f"Streaming stinger: {track}")
-                    ffmpeg_command = f"ffmpeg -i {track} -f mp3 icecast://{config['shoutcast_server']}:{config['port']}/{config['stream_id']} -loglevel error"
+                    ffmpeg_command = f"ffmpeg -i {track} -f mp3 http://{config['shoutcast_server']}:{config['port']}/{config['stream_id']} -loglevel error"
                     subprocess.run(ffmpeg_command, shell=True, check=True)
 
         except Exception as e:
