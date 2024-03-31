@@ -1,9 +1,6 @@
 #!/bin/env python
 # Requires: ffmpeg sox librosa mutagen python3
 
-#!/bin/env python
-# Requires: ffmpeg sox librosa mutagen python3
-
 import os
 import random
 import subprocess
