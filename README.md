@@ -23,3 +23,16 @@ Gen supports the following source file formats for both music and stingers:
 - .wma: Windows Media Audio, an audio file format developed by Microsoft.
 - .aiff: Audio Interchange File Format, a standard audio file format developed by Apple.
 - .alac: Apple Lossless Audio Codec, a lossless audio codec developed by Apple.
+
+Included Music Samples
+
+Song: sumu - apart [NCS Release]
+Music provided by NoCopyrightSounds
+Free Download/Stream: http://ncs.io/apart
+Watch: http://ncs.lnk.to/apartAT/youtube
+
+Song: Arc North - Symphony (feat. Donna Tella) [NCS10 Release]
+Music provided by NoCopyrightSounds
+Free Download/Stream: http://NCS.io/Symphony
+Watch: http://youtu.be/E6HlSLZVR1g
+
